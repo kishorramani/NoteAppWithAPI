@@ -7,7 +7,9 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import com.kishorramani.noteappwithapi.R
@@ -17,6 +19,7 @@ import com.kishorramani.noteappwithapi.utils.Helper
 import com.kishorramani.noteappwithapi.utils.NetworkResult
 import com.kishorramani.noteappwithapi.utils.TokenManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,7 +37,7 @@ class LoginFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -74,30 +77,32 @@ class LoginFragment : Fragment() {
     }
 
     private fun validateUserInput(): Pair<Boolean, String> {
-        /*val emailAddress = binding.txtEmail.text.toString()
-        val password = binding.txtPassword.text.toString()*/
         val userRequest = getUserRequest()
         return authViewModel.validateCredentials(userRequest.email, "", userRequest.password, true)
     }
 
     private fun bindObservers() {
-        authViewModel.userResponseStateFlow.observe(viewLifecycleOwner, Observer {
-            binding.progressBar.isVisible = false
-            when (it) {
-                is NetworkResult.Success -> {
-                    tokenManager.saveToken(it.data!!.token)
-                    findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                authViewModel.userResponseStateFlow.collect {
+                    binding.progressBar.isVisible = false
+                    when (it) {
+                        is NetworkResult.Success -> {
+                            tokenManager.saveToken(it.data!!.token)
+                            findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
+                        }
 
-                is NetworkResult.Error -> {
-                    showValidationErrors(it.message.toString())
-                }
+                        is NetworkResult.Error -> {
+                            showValidationErrors(it.message.toString())
+                        }
 
-                is NetworkResult.Loading -> {
-                    binding.progressBar.isVisible = true
+                        is NetworkResult.Loading -> {
+                            binding.progressBar.isVisible = true
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
     override fun onDestroyView() {

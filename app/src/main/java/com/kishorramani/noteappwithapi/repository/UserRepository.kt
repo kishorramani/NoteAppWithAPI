@@ -1,6 +1,5 @@
 package com.kishorramani.noteappwithapi.repository
 
-import androidx.lifecycle.LiveData
 import com.kishorramani.noteappwithapi.api.UserAPI
 import com.kishorramani.noteappwithapi.models.UserRequest
 import com.kishorramani.noteappwithapi.models.UserResponse
@@ -18,13 +17,13 @@ class UserRepository @Inject constructor(private val userAPI: UserAPI) {
         get() = _userResponseStateFlow
 
     suspend fun registerUser(userRequest: UserRequest) {
-        //_userResponseStateFlow.postValue(NetworkResult.Loading())
+        //_userResponseStateFlow.emit(NetworkResult.Loading())
         val response = userAPI.signup(userRequest)
         handleResponse(response)
     }
 
     suspend fun loginUser(userRequest: UserRequest) {
-        //_userResponseStateFlow.postValue(NetworkResult.Loading())
+        //_userResponseStateFlow.emit(NetworkResult.Loading())
         val response = userAPI.signin(userRequest)
         handleResponse(response)
     }
