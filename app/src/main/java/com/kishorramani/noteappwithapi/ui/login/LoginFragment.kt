@@ -81,7 +81,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun bindObservers() {
-        authViewModel.userResponseLiveData.observe(viewLifecycleOwner, Observer {
+        authViewModel.userResponseStateFlow.observe(viewLifecycleOwner, Observer {
             binding.progressBar.isVisible = false
             when (it) {
                 is NetworkResult.Success -> {

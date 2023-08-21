@@ -1,14 +1,11 @@
 package com.kishorramani.noteappwithapi.ui.login
 
 import android.text.TextUtils
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kishorramani.noteappwithapi.models.UserRequest
-import com.kishorramani.noteappwithapi.models.UserResponse
 import com.kishorramani.noteappwithapi.repository.UserRepository
 import com.kishorramani.noteappwithapi.utils.Helper
-import com.kishorramani.noteappwithapi.utils.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,8 +13,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(private val userRepository: UserRepository) : ViewModel() {
 
-    val userResponseLiveData: LiveData<NetworkResult<UserResponse>>
-        get() = userRepository.userResponseLiveData
+    val userResponseStateFlow
+        get() = userRepository.userResponseStateFlow
 
     fun registerUser(userRequest: UserRequest) {
         viewModelScope.launch {
@@ -35,7 +32,6 @@ class AuthViewModel @Inject constructor(private val userRepository: UserReposito
         emailAddress: String, userName: String, password: String,
         isLogin: Boolean
     ): Pair<Boolean, String> {
-
         var result = Pair(true, "")
         if (TextUtils.isEmpty(emailAddress) || (!isLogin && TextUtils.isEmpty(userName)) || TextUtils.isEmpty(password)) {
             result = Pair(false, "Please provide the credentials")
@@ -46,5 +42,4 @@ class AuthViewModel @Inject constructor(private val userRepository: UserReposito
         }
         return result
     }
-
 }

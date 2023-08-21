@@ -7,7 +7,10 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import com.kishorramani.noteappwithapi.R
@@ -17,6 +20,7 @@ import com.kishorramani.noteappwithapi.utils.Helper
 import com.kishorramani.noteappwithapi.utils.NetworkResult
 import com.kishorramani.noteappwithapi.utils.TokenManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -79,7 +83,6 @@ class RegisterFragment : Fragment() {
         binding.txtError.text = String.format(resources.getString(R.string.txt_error_message, error))
     }
 
-
     private fun getUserRequest(): UserRequest {
         return binding.run {
             UserRequest(
@@ -91,23 +94,27 @@ class RegisterFragment : Fragment() {
     }
 
     private fun bindObservers() {
-        authViewModel.userResponseLiveData.observe(viewLifecycleOwner, Observer {
-            binding.progressBar.isVisible = false
-            when (it) {
-                is NetworkResult.Success -> {
-                    tokenManager.saveToken(it.data!!.token)
-                    findNavController().navigate(R.id.action_registerFragment_to_mainFragment)
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                authViewModel.userResponseStateFlow.collect {
+                    binding.progressBar.isVisible = false
+                    when (it) {
+                        is NetworkResult.Success -> {
+                            tokenManager.saveToken(it.data!!.token)
+                            findNavController().navigate(R.id.action_registerFragment_to_mainFragment)
+                        }
 
-                is NetworkResult.Error -> {
-                    showValidationErrors(it.message.toString())
-                }
+                        is NetworkResult.Error -> {
+                            showValidationErrors(it.message.toString())
+                        }
 
-                is NetworkResult.Loading -> {
-                    binding.progressBar.isVisible = true
+                        is NetworkResult.Loading -> {
+                            binding.progressBar.isVisible = true
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
     override fun onDestroyView() {

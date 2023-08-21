@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.gson.Gson
 import com.kishorramani.noteappwithapi.R
@@ -15,6 +17,7 @@ import com.kishorramani.noteappwithapi.models.NoteRequest
 import com.kishorramani.noteappwithapi.models.NoteResponse
 import com.kishorramani.noteappwithapi.utils.NetworkResult
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class NoteFragment : Fragment() {
@@ -73,21 +76,25 @@ class NoteFragment : Fragment() {
     }
 
     private fun bindObservers() {
-        noteViewModel.statusLiveData.observe(viewLifecycleOwner, Observer {
-            when (it) {
-                is NetworkResult.Success -> {
-                    findNavController().popBackStack()
-                }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                noteViewModel.statusFlow.collect {
+                    when (it) {
+                        is NetworkResult.Success -> {
+                            findNavController().popBackStack()
+                        }
 
-                is NetworkResult.Error -> {
+                        is NetworkResult.Error -> {
 
-                }
+                        }
 
-                is NetworkResult.Loading -> {
+                        is NetworkResult.Loading -> {
 
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
     override fun onDestroyView() {
